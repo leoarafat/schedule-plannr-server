@@ -15,7 +15,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run(){
     try{
-      // const usersCollection = client.db("lens-lab").collection("users");
+      const membershipCollection = client.db("ScheduPlannr").collection("membership");
+
+      app.get('/membership', async(req, res)=>{
+        const query = {}
+        const result = await membershipCollection.find(query).toArray();
+        res.send(result)
+      })
     }
     finally {
 
