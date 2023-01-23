@@ -16,6 +16,7 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
+
   const usersCollection = client.db("ScheduPlannr").collection("users");
   app.post("/users", async (req, res) => {
     const user = req.body;
@@ -30,6 +31,34 @@ app.get('/users', async(req, res)=>{
   try {
     // const usersCollection = client.db("lens-lab").collection("users");
   } finally {
+  try {
+    const membershipCollection = client.db("ScheduPlannr").collection("membership");
+    const notesCollection = client.db("ScheduPlannr").collection("notes");
+
+    app.get('/membership', async (req, res) => {
+      const query = {}
+      const result = await membershipCollection.find(query).toArray();
+      res.send(result)
+    })
+
+    // Add notes
+    app.post('/notes', async (req, res) => {
+      const query = req.body;
+      const result = await notesCollection.insertOne(query);
+      res.send(result);
+    })
+
+    // get notes
+    app.get('/notes', async (req, res) => {
+      const query = {};
+      const cursor = notesCollection.find(query);
+      const notes = await cursor.toArray();
+      res.send(notes)
+    })
+  }
+  finally {
+
+>>>>>>> 4c8c63c9373cfdffeb6022b9d4a172f3f3
   }
 }
 run().catch(console.log);
