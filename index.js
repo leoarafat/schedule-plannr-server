@@ -25,12 +25,22 @@ async function run() {
     const sixtyMinsAMCollection = client.db("ScheduPlannr").collection("sixtyMinsAM");
     const sixtyMinsPmCollection = client.db("ScheduPlannr").collection("sixtyMinsPM");
 
-
+    // Membership
     app.get('/membership', async (req, res) => {
       const query = {}
       const result = await membershipCollection.find(query).toArray();
       res.send(result)
     })
+
+    app.get("/membership/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { ObjectId : id };
+      console.log(query);
+      const membership = await membershipCollection.findOne(query);
+      console.log(membership);
+      res.send(membership);
+    });
 
     // Add notes
     app.post('/notes', async (req, res) => {
