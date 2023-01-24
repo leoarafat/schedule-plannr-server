@@ -6,7 +6,7 @@ app.use(cors())
 app.use(express.json())
 require('dotenv').config()
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -15,6 +15,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
   try {
+    // membership
     const membershipCollection = client.db("ScheduPlannr").collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
     //time slots collection
@@ -35,7 +36,7 @@ async function run() {
     app.get("/membership/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
-      const query = { ObjectId : id };
+      const query = { _id: ObjectId(id) };
       console.log(query);
       const membership = await membershipCollection.findOne(query);
       console.log(membership);
