@@ -18,6 +18,10 @@ async function run() {
     // membership collection
     const membershipCollection = client.db("ScheduPlannr").collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
+
+    // User
+    const userCollection = client.db("ScheduPlannr").collection("users");
+
     //time slots collection
     const fifteenMinsAmCollection = client.db("ScheduPlannr").collection("fifteenMinsAM");
     const fifteenMinsPmCollection = client.db("ScheduPlannr").collection("fifteenMinsPM");
@@ -25,6 +29,20 @@ async function run() {
     const thirtyMinsPmCollection = client.db("ScheduPlannr").collection("thirtyMinsPM");
     const sixtyMinsAMCollection = client.db("ScheduPlannr").collection("sixtyMinsAM");
     const sixtyMinsPmCollection = client.db("ScheduPlannr").collection("sixtyMinsPM");
+
+
+    // Users
+    app.post('/users', async (req, res) => {
+      const query = req.body;
+      const result = await userCollection.insertOne(query);
+      res.send(result);
+    })
+
+    app.get('/users', async (req, res) => {
+      const query = {}
+      const result = await userCollection.find(query).toArray();
+      res.send(result)
+    })
 
     // Membership
     app.get('/membership', async (req, res) => {
