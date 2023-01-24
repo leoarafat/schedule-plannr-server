@@ -17,6 +17,14 @@ async function run() {
   try {
     const membershipCollection = client.db("ScheduPlannr").collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
+    //time slots collection
+    const fifteenMinsAmCollection = client.db("ScheduPlannr").collection("fifteenMinsAM");
+    const fifteenMinsPmCollection = client.db("ScheduPlannr").collection("fifteenMinsPM");
+    const thirtyMinsAmCollection = client.db("ScheduPlannr").collection("thirtyMinsAM");
+    const thirtyMinsPmCollection = client.db("ScheduPlannr").collection("thirtyMinsPM");
+    const sixtyMinsAMCollection = client.db("ScheduPlannr").collection("sixtyMinsAM");
+    const sixtyMinsPmCollection = client.db("ScheduPlannr").collection("sixtyMinsPM");
+
 
     app.get('/membership', async (req, res) => {
       const query = {}
@@ -37,6 +45,48 @@ async function run() {
       const cursor = notesCollection.find(query);
       const notes = await cursor.toArray();
       res.send(notes)
+    })
+
+    // get 15mins time slots AM
+    app.get('/fifteenMinsAM', async (req, res) => {
+      const query = {};
+      const cursor = await fifteenMinsAmCollection.find(query).toArray();
+      res.send(cursor);
+    })
+
+    // get 15mins time slots PM
+    app.get('/fifteenMinsPM', async (req, res) => {
+      const query = {};
+      const cursor = await fifteenMinsPmCollection.find(query).toArray();
+      res.send(cursor);
+    })
+
+    // get 30mins time slots AM
+    app.get('/thirtyMinsAM', async (req, res) => {
+      const query = {};
+      const cursor = await thirtyMinsAmCollection.find(query).toArray();
+      res.send(cursor);
+    })
+
+    // get 30mins time slots PM
+    app.get('/thirtyMinsPM', async (req, res) => {
+      const query = {};
+      const cursor = await thirtyMinsPmCollection.find(query).toArray();
+      res.send(cursor);
+    })
+
+    // get 60mins time slots AM
+    app.get('/sixtyMinsAM', async (req, res) => {
+      const query = {};
+      const cursor = await sixtyMinsAMCollection.find(query).toArray();
+      res.send(cursor);
+    })
+
+    // get 60mins time slots PM
+    app.get('/sixtyMinsPM', async (req, res) => {
+      const query = {};
+      const cursor = await sixtyMinsPmCollection.find(query).toArray();
+      res.send(cursor);
     })
   }
   finally {
