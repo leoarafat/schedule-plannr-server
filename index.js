@@ -15,7 +15,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
   try {
-    // membership
+    // membership collection
     const membershipCollection = client.db("ScheduPlannr").collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
     //time slots collection
