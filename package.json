@@ -1,11 +1,11 @@
 {
   "name": "scheduplannr-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "��#\u0000 \u0000S\u0000c\u0000h\u0000e\u0000d\u0000u\u0000P\u0000l\u0000a\u0000n\u0000n\u0000r\u0000-\u0000s\u0000e\u0000r\u0000v\u0000e\u0000r\u0000\r\u0000 \u0000",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-      "start-dev": "nodemon index.js",
+    "start-dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,5 +16,14 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "mongodb": "^4.13.0"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asifsikder23/ScheduPlannr-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/asifsikder23/ScheduPlannr-server/issues"
+  },
+  "homepage": "https://github.com/asifsikder23/ScheduPlannr-server#readme"
 }
