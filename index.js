@@ -45,6 +45,13 @@ async function run() {
     const sixtyMinsPmCollection = client
       .db("ScheduPlannr")
       .collection("sixtyMinsPM");
+    //Create Schedule
+    const createSchedule = client
+      .db("ScheduPlannr")
+      .collection("createSchedule");
+
+    // Team
+    const teamCollection = client.db("ScheduPlannr").collection("team");
 
     // Users
     app.post("/users", async (req, res) => {
@@ -131,6 +138,38 @@ async function run() {
       const query = {};
       const cursor = await sixtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
+    });
+
+    //create schedule
+    app.post("/createSchedule", async (req, res) => {
+      const schedule = req.body;
+      const query = {
+        email: schedule.email,
+        slot: schedule.slot,
+        slotPm: schedule.slotPm,
+      };
+      const alreadyBooked = await createSchedule.find(query).toArray();
+      if (alreadyBooked.length) {
+        const message = `You have already booked on ${
+          schedule.slot || schedule.slotPm
+        }`;
+        return res.send({ acknowledged: false, message });
+      }
+      const result = await createSchedule.insertOne(schedule);
+      res.send(result);
+    });
+
+    // yeasin arafat
+
+    app.post("/team", async (req, res) => {
+      const user = req.body;
+      const result = await teamCollection.insertOne(user);
+      res.send(result);
+    });
+    app.get("/team", async (req, res) => {
+      const query = {};
+      const result = await teamCollection.find(query).toArray();
+      res.send(result);
     });
   } finally {
   }
