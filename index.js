@@ -16,52 +16,6 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  const usersCollection = client.db("ScheduPlannr").collection("users");
-  app.post("/users", async (req, res) => {
-    const user = req.body;
-    const result = await usersCollection.insertOne(user);
-    res.send(result);
-  });
-  app.get("/users", async (req, res) => {
-    const query = {};
-    const result = await usersCollection.find(query).toArray();
-    res.send(result);
-  });
-  try {
-    const membershipCollection = client
-      .db("ScheduPlannr")
-      .collection("membership");
-    const notesCollection = client.db("ScheduPlannr").collection("notes");
-
-    app.get("/membership", async (req, res) => {
-      const query = {};
-      const result = await membershipCollection.find(query).toArray();
-      res.send(result);
-    });
-
-    // Add notes
-    app.post("/notes", async (req, res) => {
-      const query = req.body;
-      const result = await notesCollection.insertOne(query);
-      res.send(result);
-    });
-
-    // get notes
-    app.get("/notes", async (req, res) => {
-      const query = {};
-      const cursor = notesCollection.find(query);
-      const notes = await cursor.toArray();
-      res.send(notes);
-    });
-    app.delete("/users/notes/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await notesCollection.deleteOne(query);
-      res.send(result);
-    });
-  } finally {
-  }
-
   try {
     // membership collection
     const membershipCollection = client
@@ -91,6 +45,10 @@ async function run() {
     const sixtyMinsPmCollection = client
       .db("ScheduPlannr")
       .collection("sixtyMinsPM");
+    //Create Schedule
+    const createSchedule = client
+      .db("ScheduPlannr")
+      .collection("createSchedule");
 
     // Users
     app.post("/users", async (req, res) => {
@@ -178,21 +136,40 @@ async function run() {
       const cursor = await sixtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
+
+    //create schedule
+    app.post("/createSchedule", async (req, res) => {
+      const schedule = req.body;
+      const query = {
+        email: schedule.email,
+        slot: schedule.slot,
+        slotPm: schedule.slotPm,
+      };
+      const alreadyBooked = await createSchedule.find(query).toArray();
+      if (alreadyBooked.length) {
+        const message = `You have already booked on ${schedule.slot || schedule.slotPm
+          }`;
+        return res.send({ acknowledged: false, message });
+      }
+      const result = await createSchedule.insertOne(schedule);
+      res.send(result);
+    });
+
+    // yeasin arafat
+    const uniqueCollection = client.db("ScheduPlannr").collection("unique");
+    app.post("/unique", async (req, res) => {
+      const user = req.body;
+      const result = await uniqueCollection.insertOne(user);
+      res.send(result);
+    });
+    app.get("/unique", async (req, res) => {
+      const query = {};
+      const result = await uniqueCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
   }
 }
-const uniqueCollection = client.db("ScheduPlannr").collection("unique");
-app.post("/unique", async (req, res) => {
-  const user = req.body;
-  const result = await uniqueCollection.insertOne(user);
-  res.send(result);
-});
-app.get("/unique", async (req, res) => {
-  const query = {};
-  const result = await uniqueCollection.find(query).toArray();
-  res.send(result);
-});
-
 run().catch(console.log);
 
 app.get("/", (req, res) => {
