@@ -147,8 +147,9 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${schedule.slot || schedule.slotPm
-          }`;
+        const message = `You have already booked on ${
+          schedule.slot || schedule.slotPm
+        }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
