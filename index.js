@@ -51,8 +51,7 @@ async function run() {
       .collection("createSchedule");
 
     // Team
-    const teamCollection = client.db("ScheduPlannr").collection("team");
-
+    const uniqueCollection = client.db("ScheduPlannr").collection("team");
     // Users
     app.post("/users", async (req, res) => {
       const query = req.body;
@@ -160,15 +159,14 @@ async function run() {
     });
 
     // yeasin arafat
-
     app.post("/team", async (req, res) => {
       const user = req.body;
-      const result = await teamCollection.insertOne(user);
+      const result = await uniqueCollection.insertOne(user);
       res.send(result);
     });
     app.get("/team", async (req, res) => {
       const query = {};
-      const result = await teamCollection.find(query).toArray();
+      const result = await uniqueCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
