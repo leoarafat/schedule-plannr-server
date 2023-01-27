@@ -50,6 +50,9 @@ async function run() {
       .db("ScheduPlannr")
       .collection("createSchedule");
 
+    // Team
+    const teamCollection = client.db("ScheduPlannr").collection("team");
+    
     // Users
     app.post("/users", async (req, res) => {
       const query = req.body;
@@ -157,15 +160,14 @@ async function run() {
     });
 
     // yeasin arafat
-    const uniqueCollection = client.db("ScheduPlannr").collection("unique");
-    app.post("/unique", async (req, res) => {
+    app.post("/team", async (req, res) => {
       const user = req.body;
-      const result = await uniqueCollection.insertOne(user);
+      const result = await teamCollection.insertOne(user);
       res.send(result);
     });
-    app.get("/unique", async (req, res) => {
+    app.get("/team", async (req, res) => {
       const query = {};
-      const result = await uniqueCollection.find(query).toArray();
+      const result = await teamCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
