@@ -6,7 +6,7 @@ app.use(cors())
 app.use(express.json())
 require('dotenv').config()
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -15,8 +15,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
   try {
+    // membership collection
     const membershipCollection = client.db("ScheduPlannr").collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
+
+    // User
+    const userCollection = client.db("ScheduPlannr").collection("users");
+
     //time slots collection
     const fifteenMinsAmCollection = client.db("ScheduPlannr").collection("fifteenMinsAM");
     const fifteenMinsPmCollection = client.db("ScheduPlannr").collection("fifteenMinsPM");
@@ -28,11 +33,35 @@ async function run() {
     const createSchedule = client.db("ScheduPlannr").collection("createSchedule");
 
 
+    // Users
+    app.post('/users', async (req, res) => {
+      const query = req.body;
+      const result = await userCollection.insertOne(query);
+      res.send(result);
+    })
+
+    app.get('/users', async (req, res) => {
+      const query = {}
+      const result = await userCollection.find(query).toArray();
+      res.send(result)
+    })
+
+    // Membership
     app.get('/membership', async (req, res) => {
       const query = {}
       const result = await membershipCollection.find(query).toArray();
       res.send(result)
     })
+
+    app.get("/membership/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      console.log(query);
+      const membership = await membershipCollection.findOne(query);
+      console.log(membership);
+      res.send(membership);
+    });
 
     // Add notes
     app.post('/notes', async (req, res) => {
