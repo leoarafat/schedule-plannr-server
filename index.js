@@ -65,6 +65,17 @@ async function run() {
       const result = await userCollection.find(query).toArray();
       res.send(result);
     });
+    app.get("/user", async (req, res) => {
+      let query = {};
+      if (req.query.email) {
+        query = {
+          email: req.query.email,
+        };
+      }
+      const cursor = userCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
 
     // Membership
     app.get("/membership", async (req, res) => {
