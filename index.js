@@ -98,6 +98,7 @@ async function run() {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          image: user.image,
           birthDate: user.birthDate,
           contactNumber: user.contactNumber,
           currentAddress: user.currentAddress,
