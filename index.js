@@ -104,6 +104,8 @@ async function run() {
           currentAddress: user.currentAddress,
           permanentAddress: user.permanentAddress,
           gender: user.gender,
+          profession: user.profession,
+          about: user.about,
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
