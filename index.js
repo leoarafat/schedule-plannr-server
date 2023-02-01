@@ -247,8 +247,6 @@ async function run() {
       const membership = req.body;
       const price = membership.cost;
       const amount = price*100;
-      
-      console.log(amount);
 
       const paymentIntent = await stripe.paymentIntents.create({
         currency: 'usd',
