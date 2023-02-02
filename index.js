@@ -113,6 +113,7 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
+      console.log(result);
       res.send(result);
     });
     app.put("/user/admin/:id", async (req, res) => {
@@ -137,6 +138,16 @@ async function run() {
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
+
+
+    // admin 
+    app.get('/user/admin/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send({ isAdmin: user?.role === 'admin' })
+  });
+
     // Membership
     app.get("/membership", async (req, res) => {
       const query = {};
