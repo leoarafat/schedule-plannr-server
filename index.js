@@ -106,6 +106,7 @@ async function run() {
           gender: user.gender,
           profession: user.profession,
           about: user.about,
+          role: ''
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
