@@ -23,9 +23,6 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-
-
-
 async function run() {
   try {
     // membership collection
@@ -112,12 +109,36 @@ async function run() {
           gender: user.gender,
           profession: user.profession,
           about: user.about,
+          role: "",
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
       console.log(result);
       res.send(result);
     });
+    app.put("/user/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
+    });
+    app.get("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
 
     // admin 
     app.get('/user/admin/:email', async (req, res) => {
@@ -167,7 +188,6 @@ async function run() {
       const cursor = await notesCollection.findOne(query);
       res.send(cursor);
     });
-
 
     // get 15mins time slots AM
     app.get("/fifteenMinsAM", async (req, res) => {
@@ -252,6 +272,22 @@ async function run() {
     });
 
     // payment
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const membership = req.body;
+      const price = membership.cost;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
     app.post("/create-payment-intent", async (req, res)=>{
       const price = req.body?.cost;
       const amount = Number(price*100);
@@ -268,6 +304,7 @@ async function run() {
         });
       }
     })
+
   } finally {
   }
 }
