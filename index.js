@@ -5,6 +5,9 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
 const {
   MongoClient,
@@ -19,6 +22,9 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+
+
 
 async function run() {
   try {
@@ -162,6 +168,7 @@ async function run() {
       res.send(cursor);
     });
 
+
     // get 15mins time slots AM
     app.get("/fifteenMinsAM", async (req, res) => {
       const query = {};
@@ -243,6 +250,24 @@ async function run() {
       const mySchedule = await createSchedule.find(query).toArray();
       res.send(mySchedule);
     });
+
+    // payment
+    app.post("/create-payment-intent", async (req, res)=>{
+      const price = req.body?.cost;
+      const amount = Number(price*100);
+      if(amount){
+        const paymentIntent = await stripe.paymentIntents.create({
+          currency: 'usd',
+          amount: amount,
+          "payment_method_types": [
+            'card'
+          ]
+        });
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      }
+    })
   } finally {
   }
 }
