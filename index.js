@@ -31,6 +31,8 @@ async function run() {
       .collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
 
+    const blogsCollection = client.db("ScheduPlannr").collection("blogs");
+
     // User
     const userCollection = client.db("ScheduPlannr").collection("users");
 
@@ -288,6 +290,17 @@ async function run() {
         });
       }
     })
+    // add blog
+    app.post("/blogs", async (req, res) => {
+      const query = req.body;
+      const result = await blogsCollection.insertOne(query);
+      res.send(result);
+    });
+    app.get("/blogs", async (req, res) => {
+      const query = {};
+      const result = await blogsCollection.find(query).toArray();
+      res.send(result);
+    });
 
   } finally {
   }
