@@ -31,6 +31,8 @@ async function run() {
       .collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
 
+    const blogsCollection = client.db("ScheduPlannr").collection("blogs");
+
     // User
     const userCollection = client.db("ScheduPlannr").collection("users");
 
@@ -54,9 +56,7 @@ async function run() {
       .db("ScheduPlannr")
       .collection("sixtyMinsPM");
     //Create Schedule
-    const createSchedule = client
-      .db("ScheduPlannr")
-      .collection("createSchedule");
+    const createSchedule = client.db("ScheduPlannr").collection("createSchedule");
 
     // Team
     const teamCollection = client.db("ScheduPlannr").collection("team");
@@ -146,7 +146,7 @@ async function run() {
       const query = { email };
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === 'admin' })
-  });
+    });
 
     // Membership
     app.get("/membership", async (req, res) => {
@@ -241,14 +241,45 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${
-          schedule.slot || schedule.slotPm
-        }`;
+        const message = `You have already booked on ${schedule.slot || schedule.slotPm
+          }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
       res.send(result);
     });
+
+    // update schedule
+    app.put('/createSchedule/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = {
+        _id: ObjectId(id)
+      };
+      const schedule = req.body;
+      const option = { upsert: true }
+      const updateSchedule = {
+        $set: {
+          name: schedule.name,
+          email: schedule.email,
+          description: schedule.description,
+          link: schedule.link,
+          location: schedule.location,
+          title: schedule.title,
+          organization: schedule.organization,
+          phone: schedule.phone,
+        }
+      }
+      const result = await createSchedule.updateOne(filter, updateSchedule, option);
+      res.send(result);
+    })
+
+    // delete schedule 
+    app.delete('/createSchedule/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) }
+      const result = await createSchedule.deleteOne(query);
+      res.send(result);
+    })
 
     // yeasin arafat
     app.post("/team", async (req, res) => {
@@ -256,6 +287,7 @@ async function run() {
       const result = await teamCollection.insertOne(user);
       res.send(result);
     });
+
     app.get("/team", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
@@ -271,11 +303,21 @@ async function run() {
       res.send(mySchedule);
     });
 
+    // get Schedule
+    app.get("/createSchedule/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: ObjectId(id)
+      };
+      const mySchedule = await createSchedule.findOne(query);
+      res.send(mySchedule);
+    });
+
     // payment
-    app.post("/create-payment-intent", async (req, res)=>{
+    app.post("/create-payment-intent", async (req, res) => {
       const price = req.body?.cost;
-      const amount = Number(price*100);
-      if(amount){
+      const amount = Number(price * 100);
+      if (amount) {
         const paymentIntent = await stripe.paymentIntents.create({
           currency: 'usd',
           amount: amount,
@@ -288,6 +330,17 @@ async function run() {
         });
       }
     })
+    // add blog
+    app.post("/blogs", async (req, res) => {
+      const query = req.body;
+      const result = await blogsCollection.insertOne(query);
+      res.send(result);
+    });
+    app.get("/blogs", async (req, res) => {
+      const query = {};
+      const result = await blogsCollection.find(query).toArray();
+      res.send(result);
+    });
 
   } finally {
   }
