@@ -5,8 +5,16 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+  ObjectID,
+} = require("mongodb");
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.4p5kw6q.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -22,6 +30,8 @@ async function run() {
       .db("ScheduPlannr")
       .collection("membership");
     const notesCollection = client.db("ScheduPlannr").collection("notes");
+
+    const blogsCollection = client.db("ScheduPlannr").collection("blogs");
 
     // User
     const userCollection = client.db("ScheduPlannr").collection("users");
@@ -76,6 +86,69 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+    app.get("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectID(id) };
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    });
+    app.put("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectID(id) };
+      const user = req.body;
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: {
+          name: user.displayName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          image: user.image,
+          birthDate: user.birthDate,
+          contactNumber: user.contactNumber,
+          currentAddress: user.currentAddress,
+          permanentAddress: user.permanentAddress,
+          gender: user.gender,
+          profession: user.profession,
+          about: user.about,
+          role: "",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, option);
+      console.log(result);
+      res.send(result);
+    });
+    app.put("/user/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
+    });
+    app.get("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
+
+    // admin 
+    app.get('/user/admin/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send({ isAdmin: user?.role === 'admin' })
+  });
 
     // Membership
     app.get("/membership", async (req, res) => {
@@ -199,6 +272,7 @@ async function run() {
       res.send(mySchedule);
     });
 
+
     // delete note
     app.delete("/notes/:id", async (req, res) => {
       const id = req.params.id;
@@ -206,6 +280,37 @@ async function run() {
       const result = await notesCollection.deleteOne(query);
       res.send(result)
     })
+
+    // payment
+    app.post("/create-payment-intent", async (req, res)=>{
+      const price = req.body?.cost;
+      const amount = Number(price*100);
+      if(amount){
+        const paymentIntent = await stripe.paymentIntents.create({
+          currency: 'usd',
+          amount: amount,
+          "payment_method_types": [
+            'card'
+          ]
+        });
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      }
+    })
+    // add blog
+    app.post("/blogs", async (req, res) => {
+      const query = req.body;
+      const result = await blogsCollection.insertOne(query);
+      res.send(result);
+    });
+    app.get("/blogs", async (req, res) => {
+      const query = {};
+      const result = await blogsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
   } finally {
   }
 }
