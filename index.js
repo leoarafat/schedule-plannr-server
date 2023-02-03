@@ -294,6 +294,12 @@ async function run() {
       const result = await teamCollection.find(query).toArray();
       res.send(result);
     });
+    app.delete('/team/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) }
+      const result = await teamCollection.deleteOne(query);
+      res.send(result);
+    })
 
     //my Schedule
     app.get("/mySchedule", async (req, res) => {
