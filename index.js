@@ -170,9 +170,8 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${
-          schedule.slot || schedule.slotPm
-        }`;
+        const message = `You have already booked on ${schedule.slot || schedule.slotPm
+          }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
@@ -199,6 +198,14 @@ async function run() {
       const mySchedule = await createSchedule.find(query).toArray();
       res.send(mySchedule);
     });
+
+    // delete note
+    app.delete("/notes/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await notesCollection.deleteOne(query);
+      res.send(result)
+    })
   } finally {
   }
 }
