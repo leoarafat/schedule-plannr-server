@@ -189,6 +189,14 @@ async function run() {
       res.send(cursor);
     });
 
+    // delete note
+    app.delete("/notes/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await notesCollection.deleteOne(query);
+      res.send(result)
+    })
+
     // get 15mins time slots AM
     app.get("/fifteenMinsAM", async (req, res) => {
       const query = {};
