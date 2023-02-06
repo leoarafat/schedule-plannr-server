@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +23,23 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// JWT Token
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send("unauthorized access");
+  }
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (er, decoded) {
+    if (er) {
+      return res.status(403).send({ message: "forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 
 async function run() {
   try {
@@ -56,7 +74,9 @@ async function run() {
       .db("ScheduPlannr")
       .collection("sixtyMinsPM");
     //Create Schedule
-    const createSchedule = client.db("ScheduPlannr").collection("createSchedule");
+    const createSchedule = client
+      .db("ScheduPlannr")
+      .collection("createSchedule");
 
     // Team
     const teamCollection = client.db("ScheduPlannr").collection("team");
@@ -66,6 +86,20 @@ async function run() {
       const query = req.body;
       const result = await userCollection.insertOne(query);
       res.send(result);
+    });
+
+    // JWT Token
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "1d",
+        });
+        return res.send({ accessToken: token });
+      }
+      res.status(403).send({ accessToken: "" });
     });
 
     app.get("/users", async (req, res) => {
@@ -84,13 +118,13 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
-    app.get("/user/:id", async (req, res) => {
+    app.get("/user/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectID(id) };
       const result = await userCollection.findOne(query);
       res.send(result);
     });
-    app.put("/user/:id", async (req, res) => {
+    app.put("/user/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectID(id) };
       const user = req.body;
@@ -116,7 +150,7 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-    app.put("/user/admin/:id", async (req, res) => {
+    app.put("/user/admin/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
@@ -132,30 +166,29 @@ async function run() {
       );
       res.send(result);
     });
-    app.get("/user/admin/:email", async (req, res) => {
+    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
 
-
-    // admin 
-    app.get('/user/admin/:email', async (req, res) => {
+    // admin
+    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
-      res.send({ isAdmin: user?.role === 'admin' })
+      res.send({ isAdmin: user?.role === "admin" });
     });
 
     // Membership
-    app.get("/membership", async (req, res) => {
+    app.get("/membership", verifyJWT, async (req, res) => {
       const query = {};
       const result = await membershipCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.get("/membership/:id", async (req, res) => {
+    app.get("/membership/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const query = { _id: ObjectId(id) };
@@ -166,14 +199,14 @@ async function run() {
     });
 
     // Add notes
-    app.post("/notes", async (req, res) => {
+    app.post("/notes", verifyJWT, async (req, res) => {
       const query = req.body;
       const result = await notesCollection.insertOne(query);
       res.send(result);
     });
 
     // get notes
-    app.get("/notes", async (req, res) => {
+    app.get("/notes", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await notesCollection
         .find(query)
@@ -182,7 +215,7 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/notes/:id", async (req, res) => {
+    app.get("/notes/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const cursor = await notesCollection.findOne(query);
@@ -190,49 +223,49 @@ async function run() {
     });
 
     // get 15mins time slots AM
-    app.get("/fifteenMinsAM", async (req, res) => {
+    app.get("/fifteenMinsAM", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await fifteenMinsAmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 15mins time slots PM
-    app.get("/fifteenMinsPM", async (req, res) => {
+    app.get("/fifteenMinsPM", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await fifteenMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 30mins time slots AM
-    app.get("/thirtyMinsAM", async (req, res) => {
+    app.get("/thirtyMinsAM", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await thirtyMinsAmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 30mins time slots PM
-    app.get("/thirtyMinsPM", async (req, res) => {
+    app.get("/thirtyMinsPM", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await thirtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 60mins time slots AM
-    app.get("/sixtyMinsAM", async (req, res) => {
+    app.get("/sixtyMinsAM", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await sixtyMinsAMCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 60mins time slots PM
-    app.get("/sixtyMinsPM", async (req, res) => {
+    app.get("/sixtyMinsPM", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = await sixtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     //create schedule
-    app.post("/createSchedule", async (req, res) => {
+    app.post("/createSchedule", verifyJWT, async (req, res) => {
       const schedule = req.body;
       const query = {
         email: schedule.email,
@@ -241,8 +274,9 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${schedule.slot || schedule.slotPm
-          }`;
+        const message = `You have already booked on ${
+          schedule.slot || schedule.slotPm
+        }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
@@ -250,13 +284,13 @@ async function run() {
     });
 
     // update schedule
-    app.put('/createSchedule/:id', async (req, res) => {
+    app.put("/createSchedule/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = {
-        _id: ObjectId(id)
+        _id: ObjectId(id),
       };
       const schedule = req.body;
-      const option = { upsert: true }
+      const option = { upsert: true };
       const updateSchedule = {
         $set: {
           name: schedule.name,
@@ -267,42 +301,46 @@ async function run() {
           title: schedule.title,
           organization: schedule.organization,
           phone: schedule.phone,
-        }
-      }
-      const result = await createSchedule.updateOne(filter, updateSchedule, option);
+        },
+      };
+      const result = await createSchedule.updateOne(
+        filter,
+        updateSchedule,
+        option
+      );
       res.send(result);
-    })
+    });
 
-    // delete schedule 
-    app.delete('/createSchedule/:id', async (req, res) => {
+    // delete schedule
+    app.delete("/createSchedule/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const query = { _id: ObjectId(id) }
+      const query = { _id: ObjectId(id) };
       const result = await createSchedule.deleteOne(query);
       res.send(result);
-    })
+    });
 
     // yeasin arafat
-    app.post("/team", async (req, res) => {
+    app.post("/team", verifyJWT, async (req, res) => {
       const user = req.body;
       const result = await teamCollection.insertOne(user);
       res.send(result);
     });
 
-    app.get("/team", async (req, res) => {
+    app.get("/team", verifyJWT, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const result = await teamCollection.find(query).toArray();
       res.send(result);
     });
-    app.delete('/team/:id', async (req, res) => {
+    app.delete("/team/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const query = { _id: ObjectId(id) }
+      const query = { _id: ObjectId(id) };
       const result = await teamCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
     //my Schedule
-    app.get("/mySchedule", async (req, res) => {
+    app.get("/mySchedule", verifyJWT, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const mySchedule = await createSchedule.find(query).toArray();
@@ -310,44 +348,41 @@ async function run() {
     });
 
     // get Schedule
-    app.get("/createSchedule/:id", async (req, res) => {
+    app.get("/createSchedule/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = {
-        _id: ObjectId(id)
+        _id: ObjectId(id),
       };
       const mySchedule = await createSchedule.findOne(query);
       res.send(mySchedule);
     });
 
     // payment
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const price = req.body?.cost;
       const amount = Number(price * 100);
       if (amount) {
         const paymentIntent = await stripe.paymentIntents.create({
-          currency: 'usd',
+          currency: "usd",
           amount: amount,
-          "payment_method_types": [
-            'card'
-          ]
+          payment_method_types: ["card"],
         });
         res.send({
           clientSecret: paymentIntent.client_secret,
         });
       }
-    })
+    });
     // add blog
-    app.post("/blogs", async (req, res) => {
+    app.post("/blogs", verifyJWT, async (req, res) => {
       const query = req.body;
       const result = await blogsCollection.insertOne(query);
       res.send(result);
     });
-    app.get("/blogs", async (req, res) => {
+    app.get("/blogs", verifyJWT, async (req, res) => {
       const query = {};
       const result = await blogsCollection.find(query).toArray();
       res.send(result);
     });
-
   } finally {
   }
 }
