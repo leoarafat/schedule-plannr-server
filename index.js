@@ -222,6 +222,14 @@ async function run() {
       res.send(cursor);
     });
 
+    // delete note
+    app.delete("/notes/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await notesCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // get 15mins time slots AM
     app.get("/fifteenMinsAM", verifyJWT, async (req, res) => {
       const query = {};
@@ -373,12 +381,12 @@ async function run() {
       }
     });
     // add blog
-    app.post("/blogs", verifyJWT, async (req, res) => {
+    app.post("/blogs", async (req, res) => {
       const query = req.body;
       const result = await blogsCollection.insertOne(query);
       res.send(result);
     });
-    app.get("/blogs", verifyJWT, async (req, res) => {
+    app.get("/blogs", async (req, res) => {
       const query = {};
       const result = await blogsCollection.find(query).toArray();
       res.send(result);
@@ -391,6 +399,14 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     });
+    app.get("/blogPost/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await blogsCollection.findOne(query);
+      res.send(cursor);
+    });
+
+    
   } finally {
   }
 }
