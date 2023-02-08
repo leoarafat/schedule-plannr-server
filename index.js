@@ -180,6 +180,13 @@ async function run() {
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
+    // Delete users
+    app.delete("/user/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Membership
     app.get("/membership", verifyJWT, async (req, res) => {
@@ -391,14 +398,13 @@ async function run() {
       const result = await blogsCollection.find(query).toArray();
       res.send(result);
     });
-
-    // Delete users
-    app.delete("/user/:id", verifyJWT, async (req, res) => {
+    app.delete("/blogs/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const result = await userCollection.deleteOne(query);
+      const result = await blogsCollection.deleteOne(query);
       res.send(result);
     });
+
     app.get("/blogPost/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
