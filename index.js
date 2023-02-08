@@ -228,8 +228,8 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await notesCollection.deleteOne(query);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // get 15mins time slots AM
     app.get("/fifteenMinsAM", verifyJWT, async (req, res) => {
@@ -392,12 +392,22 @@ async function run() {
       const result = await blogsCollection.find(query).toArray();
       res.send(result);
     });
+
+    // Delete users
+    app.delete("/user/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
     app.get("/blogPost/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const cursor = await blogsCollection.findOne(query);
       res.send(cursor);
     });
+
+    
   } finally {
   }
 }
