@@ -1,15 +1,22 @@
 const express = require("express");
 const app = express();
+const bodyParser = require("body-parser");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const io = new Server({
+  cors: true,
+});
 
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json());
 require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const port = process.env.PORT || 5000;
+const portIo = process.env.PORT || 5001;
 const {
   MongoClient,
   ServerApiVersion,
@@ -166,7 +173,8 @@ async function run() {
       );
       res.send(result);
     });
-    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
+    
+    app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
@@ -411,7 +419,33 @@ async function run() {
       const cursor = await blogsCollection.findOne(query);
       res.send(cursor);
     });
+    //socket
+    const emailToSocketMapping = new Map();
+    const socketToEmailMapping = new Map();
 
+    io.on("connection", (socket) => {
+      // console.log('new connection')
+      socket.on("join-room", (data) => {
+        const { roomId, emailId } = data;
+        console.log("user", emailId, "Joined room with", roomId);
+        emailToSocketMapping.set(emailId, socket.id);
+        socketToEmailMapping.set(socket.id, emailId);
+        socket.join(roomId);
+        socket.emit("joined-room", { roomId });
+        socket.broadcast.to(roomId).emit("user-joined", { emailId });
+      });
+      socket.on("call-user", (data) => {
+        const { emailId, offer } = data;
+        const fromEmail = socketToEmailMapping.get(socket.id);
+        const socketId = emailToSocketMapping.get(emailId);
+        socket.to(socketId)?.emit("incoming-call", { from: fromEmail, offer });
+      });
+      socket.on("call-accepted", (data) => {
+        const { emailId, ans } = data;
+        const socketId = emailToSocketMapping.get(emailId);
+        socket.to(socketId).emit("call-accepted", { ans });
+      });
+    });
     
   } finally {
   }
@@ -425,3 +459,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+io.listen(portIo, ()=> {})
