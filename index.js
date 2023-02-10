@@ -81,6 +81,10 @@ async function run() {
     // Team
     const teamCollection = client.db("ScheduPlannr").collection("team");
 
+    const availability = client.db("ScheduPlannr").collection("availability");
+
+    // const checkBox = client.db("ScheduPlannr").collection("checkBox");
+
     // Users
     app.post("/users", async (req, res) => {
       const query = req.body;
@@ -282,9 +286,8 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${
-          schedule.slot || schedule.slotPm
-        }`;
+        const message = `You have already booked on ${schedule.slot || schedule.slotPm
+          }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
@@ -397,6 +400,56 @@ async function run() {
       const cursor = await blogsCollection.findOne(query);
       res.send(cursor);
     });
+
+    app.get("/availability", async (req, res) => {
+      const query = {};
+      const result = await availability.find(query).toArray();
+      res.send(result);
+    });
+
+    app.put("/availability/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const availabilityy = req.body;
+      const option = { upsert: true };
+      const updateAvailability = {
+        $set: {
+          start_time: availabilityy.start_time,
+          // end_time: availabilityy.end_time,
+          // role: availabilityy.role
+        }
+      };
+      const result = await availability.updateOne(filter, updateAvailability, option);
+      res.send(result);
+    })
+
+    // app.get("/availability/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: ObjectId(id) };
+    //   const result = await availability.findOne(query);
+    //   res.send(result);
+    // });
+
+    // //save liked info
+    // app.post('/checkBox', async (req, res) => {
+    //   const query = req.body;
+    //   const liked = await checkBox.insertOne(query);
+    //   res.send(liked);
+    // })
+
+    // //delete like info
+    // app.delete('/checkBox', async (req, res) => {
+    //   const query = { one: 1 };
+    //   const likedd = await checkBox.deleteOne(query);
+    //   res.send(likedd);
+    // })
+
+    // //get data
+    // app.get('/checkBox', async (req, res) => {
+    //   const query = {};
+    //   const likeData = await checkBox.find(query).toArray();
+    //   res.send(likeData);
+    // })
   } finally {
   }
 }
