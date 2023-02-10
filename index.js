@@ -104,6 +104,7 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
+      console.log("user", user);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
           expiresIn: "1d",
@@ -135,17 +136,17 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     });
-    app.put("/user/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: ObjectID(id) };
+    app.patch("/user/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = {email: email };
       const user = req.body;
       const option = { upsert: true };
       const updateDoc = {
         $set: {
-          name: user.displayName,
-          firstName: user.firstName,
+          // name: user.displayName,
+          name: user.name,
           lastName: user.lastName,
-          email: user.email,
+          // email: user.email,
           image: user.image,
           birthDate: user.birthDate,
           contactNumber: user.contactNumber,
@@ -158,7 +159,6 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
-      console.log(result);
       res.send(result);
     });
     app.put("/user/admin/:id", verifyJWT, async (req, res) => {
