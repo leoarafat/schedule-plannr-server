@@ -88,6 +88,10 @@ async function run() {
     // Team
     const teamCollection = client.db("ScheduPlannr").collection("team");
 
+    const availability = client.db("ScheduPlannr").collection("availability");
+
+    // const checkBox = client.db("ScheduPlannr").collection("checkBox");
+
     // Users
     app.post("/users", async (req, res) => {
       const query = req.body;
@@ -449,34 +453,56 @@ async function run() {
       const cursor = await blogsCollection.findOne(query);
       res.send(cursor);
     });
-    //socket
-    const emailToSocketMapping = new Map();
-    const socketToEmailMapping = new Map();
 
-    io.on("connection", (socket) => {
-      // console.log('new connection')
-      socket.on("join-room", (data) => {
-        const { roomId, emailId } = data;
-        console.log("user", emailId, "Joined room with", roomId);
-        emailToSocketMapping.set(emailId, socket.id);
-        socketToEmailMapping.set(socket.id, emailId);
-        socket.join(roomId);
-        socket.emit("joined-room", { roomId });
-        socket.broadcast.to(roomId).emit("user-joined", { emailId });
-      });
-      socket.on("call-user", (data) => {
-        const { emailId, offer } = data;
-        const fromEmail = socketToEmailMapping.get(socket.id);
-        const socketId = emailToSocketMapping.get(emailId);
-        socket.to(socketId)?.emit("incoming-call", { from: fromEmail, offer });
-      });
-      socket.on("call-accepted", (data) => {
-        const { emailId, ans } = data;
-        const socketId = emailToSocketMapping.get(emailId);
-        socket.to(socketId).emit("call-accepted", { ans });
-      });
+    app.get("/availability", async (req, res) => {
+      const query = {};
+      const result = await availability.find(query).toArray();
+      res.send(result);
     });
 
+    app.put("/availability/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const availabilityy = req.body;
+      const option = { upsert: true };
+      const updateAvailability = {
+        $set: {
+          start_time: availabilityy.start_time,
+          // end_time: availabilityy.end_time,
+          // role: availabilityy.role
+        }
+      };
+      const result = await availability.updateOne(filter, updateAvailability, option);
+      res.send(result);
+    })
+
+    // app.get("/availability/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: ObjectId(id) };
+    //   const result = await availability.findOne(query);
+    //   res.send(result);
+    // });
+
+    // //save liked info
+    // app.post('/checkBox', async (req, res) => {
+    //   const query = req.body;
+    //   const liked = await checkBox.insertOne(query);
+    //   res.send(liked);
+    // })
+
+    // //delete like info
+    // app.delete('/checkBox', async (req, res) => {
+    //   const query = { one: 1 };
+    //   const likedd = await checkBox.deleteOne(query);
+    //   res.send(likedd);
+    // })
+
+    // //get data
+    // app.get('/checkBox', async (req, res) => {
+    //   const query = {};
+    //   const likeData = await checkBox.find(query).toArray();
+    //   res.send(likeData);
+    // })
   } finally {
   }
 }
