@@ -246,49 +246,49 @@ async function run() {
     });
 
     // get 15mins time slots AM
-    app.get("/fifteenMinsAM", verifyJWT, async (req, res) => {
+    app.get("/fifteenMinsAM",  async (req, res) => {
       const query = {};
       const cursor = await fifteenMinsAmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 15mins time slots PM
-    app.get("/fifteenMinsPM", verifyJWT, async (req, res) => {
+    app.get("/fifteenMinsPM", async (req, res) => {
       const query = {};
       const cursor = await fifteenMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 30mins time slots AM
-    app.get("/thirtyMinsAM", verifyJWT, async (req, res) => {
+    app.get("/thirtyMinsAM",  async (req, res) => {
       const query = {};
       const cursor = await thirtyMinsAmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 30mins time slots PM
-    app.get("/thirtyMinsPM", verifyJWT, async (req, res) => {
+    app.get("/thirtyMinsPM",  async (req, res) => {
       const query = {};
       const cursor = await thirtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 60mins time slots AM
-    app.get("/sixtyMinsAM", verifyJWT, async (req, res) => {
+    app.get("/sixtyMinsAM",  async (req, res) => {
       const query = {};
       const cursor = await sixtyMinsAMCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 60mins time slots PM
-    app.get("/sixtyMinsPM", verifyJWT, async (req, res) => {
+    app.get("/sixtyMinsPM", async (req, res) => {
       const query = {};
       const cursor = await sixtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     //create schedule
-    app.post("/createSchedule", verifyJWT, async (req, res) => {
+    app.post("/createSchedule", async (req, res) => {
       const schedule = req.body;
       const query = {
         email: schedule.email,
@@ -306,7 +306,7 @@ async function run() {
     });
 
     // update schedule
-    app.put("/createSchedule/:id", verifyJWT, async (req, res) => {
+    app.put("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
       const filter = {
         _id: ObjectId(id),
@@ -334,7 +334,7 @@ async function run() {
     });
 
     // delete schedule
-    app.delete("/createSchedule/:id", verifyJWT, async (req, res) => {
+    app.delete("/createSchedule/:id",async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await createSchedule.deleteOne(query);
@@ -359,28 +359,37 @@ async function run() {
       res.send(mySchedule);
     });
 
-    // team
-    app.post("/team", verifyJWT, async (req, res) => {
+    // yeasin arafat
+    app.post("/team", async (req, res) => {
       const user = req.body;
       const result = await teamCollection.insertOne(user);
       res.send(result);
     });
 
-    app.get("/team", verifyJWT, async (req, res) => {
+    app.get("/team", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const result = await teamCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.delete("/team/:id", verifyJWT, async (req, res) => {
+    app.delete("/team/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await teamCollection.deleteOne(query);
       res.send(result);
     });
 
-    app.put("/team/:id", async (req, res) => {
+    //my Schedule
+    app.get("/mySchedule", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const mySchedule = await createSchedule.find(query).toArray();
+      res.send(mySchedule);
+    });
+
+    // get Schedule
+    app.get("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
       const filter = {
         _id: ObjectId(id),
@@ -411,7 +420,7 @@ async function run() {
     });
 
     // payment
-    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const price = req.body?.cost;
       const amount = Number(price * 100);
       if (amount) {
