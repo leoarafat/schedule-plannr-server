@@ -100,7 +100,7 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      console.log(user);
+      console.log("user", user);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
           expiresIn: "1d",
@@ -142,7 +142,7 @@ async function run() {
           // name: user.displayName,
           name: user.name,
           lastName: user.lastName,
-          email: user.email,
+          // email: user.email,
           image: user.image,
           birthDate: user.birthDate,
           contactNumber: user.contactNumber,
