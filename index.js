@@ -1,15 +1,22 @@
 const express = require("express");
 const app = express();
+const bodyParser = require("body-parser");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const io = new Server({
+  cors: true,
+});
 
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json());
 require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const port = process.env.PORT || 5000;
+const portIo = process.env.PORT || 5001;
 const {
   MongoClient,
   ServerApiVersion,
@@ -170,7 +177,8 @@ async function run() {
       );
       res.send(result);
     });
-    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
+
+    app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
@@ -183,6 +191,13 @@ async function run() {
       const query = { email };
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
+    });
+    // Delete users
+    app.delete("/user/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
     });
 
     // Membership
@@ -231,8 +246,8 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await notesCollection.deleteOne(query);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // get 15mins time slots AM
     app.get("/fifteenMinsAM", verifyJWT, async (req, res) => {
@@ -330,26 +345,6 @@ async function run() {
       res.send(result);
     });
 
-    // yeasin arafat
-    app.post("/team", verifyJWT, async (req, res) => {
-      const user = req.body;
-      const result = await teamCollection.insertOne(user);
-      res.send(result);
-    });
-
-    app.get("/team", verifyJWT, async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const result = await teamCollection.find(query).toArray();
-      res.send(result);
-    });
-    app.delete("/team/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await teamCollection.deleteOne(query);
-      res.send(result);
-    });
-
     //my Schedule
     app.get("/mySchedule", verifyJWT, async (req, res) => {
       const email = req.query.email;
@@ -366,6 +361,57 @@ async function run() {
       };
       const mySchedule = await createSchedule.findOne(query);
       res.send(mySchedule);
+    });
+
+    // team
+    app.post("/team", verifyJWT, async (req, res) => {
+      const user = req.body;
+      const result = await teamCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get("/team", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await teamCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/team/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await teamCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.put("/team/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = {
+        _id: ObjectId(id),
+      };
+      const team = req.body;
+      const option = { upsert: true };
+      const updateTeam = {
+        $set: {
+          name: team.name,
+          email: team.email,
+          name1: team.name1,
+          email1: team.email1,
+          name2: team.name2,
+          email2: team.email,
+          name3: team.name,
+          email3: team.email,
+          name4: team.name,
+          email4: team.email,
+
+        },
+      };
+      const result = await teamCollection.updateOne(
+        filter,
+        updateTeam,
+        option
+      );
+      res.send(result);
     });
 
     // payment
@@ -394,6 +440,13 @@ async function run() {
       const result = await blogsCollection.find(query).toArray();
       res.send(result);
     });
+    app.delete("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await blogsCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.get("/blogPost/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -462,3 +515,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+io.listen(portIo, () => { })
