@@ -173,7 +173,7 @@ async function run() {
       );
       res.send(result);
     });
-    
+
     app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -297,9 +297,8 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${
-          schedule.slot || schedule.slotPm
-        }`;
+        const message = `You have already booked on ${schedule.slot || schedule.slotPm
+          }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
@@ -342,6 +341,24 @@ async function run() {
       res.send(result);
     });
 
+    //my Schedule
+    app.get("/mySchedule", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const mySchedule = await createSchedule.find(query).toArray();
+      res.send(mySchedule);
+    });
+
+    // get Schedule
+    app.get("/createSchedule/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: ObjectId(id),
+      };
+      const mySchedule = await createSchedule.findOne(query);
+      res.send(mySchedule);
+    });
+
     // yeasin arafat
     app.post("/team", async (req, res) => {
       const user = req.body;
@@ -355,6 +372,7 @@ async function run() {
       const result = await teamCollection.find(query).toArray();
       res.send(result);
     });
+
     app.delete("/team/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -373,11 +391,32 @@ async function run() {
     // get Schedule
     app.get("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {
+      const filter = {
         _id: ObjectId(id),
       };
-      const mySchedule = await createSchedule.findOne(query);
-      res.send(mySchedule);
+      const team = req.body;
+      const option = { upsert: true };
+      const updateTeam = {
+        $set: {
+          name: team.name,
+          email: team.email,
+          name1: team.name1,
+          email1: team.email1,
+          name2: team.name2,
+          email2: team.email,
+          name3: team.name,
+          email3: team.email,
+          name4: team.name,
+          email4: team.email,
+
+        },
+      };
+      const result = await teamCollection.updateOne(
+        filter,
+        updateTeam,
+        option
+      );
+      res.send(result);
     });
 
     // payment
@@ -446,7 +485,7 @@ async function run() {
         socket.to(socketId).emit("call-accepted", { ans });
       });
     });
-    
+
   } finally {
   }
 }
@@ -459,4 +498,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-io.listen(portIo, ()=> {})
+io.listen(portIo, () => { })
