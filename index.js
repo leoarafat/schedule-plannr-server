@@ -94,9 +94,15 @@ async function run() {
 
     // Users
     app.post("/users", async (req, res) => {
-      const query = req.body;
-      const result = await userCollection.insertOne(query);
-      res.send(result);
+      const user = req.body;
+      const email = user.email;
+      const query = { email: email };
+      const isExist = await userCollection.findOne(query);
+      if (!isExist) {
+        const result = await userCollection.insertOne(user);
+        res.send(result);
+      }
+      res.send({ message: "This user already exist!" });
     });
 
     // JWT Token
@@ -104,7 +110,7 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      console.log("user", user);
+      console.log(user);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
           expiresIn: "1d",
@@ -138,15 +144,13 @@ async function run() {
     });
     app.patch("/user/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const filter = {email: email };
+      const filter = { email: email };
       const user = req.body;
       const option = { upsert: true };
       const updateDoc = {
         $set: {
-          // name: user.displayName,
           name: user.name,
           lastName: user.lastName,
-          // email: user.email,
           image: user.image,
           birthDate: user.birthDate,
           contactNumber: user.contactNumber,
@@ -242,7 +246,7 @@ async function run() {
     });
 
     // delete note
-    app.delete("/notes/:id", async (req, res) => {
+    app.delete("/notes/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await notesCollection.deleteOne(query);
@@ -301,8 +305,9 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${schedule.slot || schedule.slotPm
-          }`;
+        const message = `You have already booked on ${
+          schedule.slot || schedule.slotPm
+        }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
@@ -354,7 +359,7 @@ async function run() {
     });
 
     // get Schedule
-    app.get("/createSchedule/:id",  async (req, res) => {
+    app.get("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: ObjectId(id),
@@ -370,7 +375,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/team",  async (req, res) => {
+    app.get("/team", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const result = await teamCollection.find(query).toArray();
@@ -384,7 +389,7 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/team/:id", async (req, res) => {
+    app.put("/team/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = {
         _id: ObjectId(id),
@@ -403,14 +408,9 @@ async function run() {
           email3: team.email,
           name4: team.name,
           email4: team.email,
-
         },
       };
-      const result = await teamCollection.updateOne(
-        filter,
-        updateTeam,
-        option
-      );
+      const result = await teamCollection.updateOne(filter, updateTeam, option);
       res.send(result);
     });
 
@@ -430,7 +430,7 @@ async function run() {
       }
     });
     // add blog
-    app.post("/blogs", async (req, res) => {
+    app.post("/blogs", verifyJWT, async (req, res) => {
       const query = req.body;
       const result = await blogsCollection.insertOne(query);
       res.send(result);
@@ -440,7 +440,7 @@ async function run() {
       const result = await blogsCollection.find(query).toArray();
       res.send(result);
     });
-    app.delete("/blogs/:id", async (req, res) => {
+    app.delete("/blogs/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await blogsCollection.deleteOne(query);
@@ -460,7 +460,7 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/availability/:id", async (req, res) => {
+    app.put("/availability/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const availabilityy = req.body;
@@ -470,11 +470,15 @@ async function run() {
           start_time: availabilityy.start_time,
           // end_time: availabilityy.end_time,
           // role: availabilityy.role
-        }
+        },
       };
-      const result = await availability.updateOne(filter, updateAvailability, option);
+      const result = await availability.updateOne(
+        filter,
+        updateAvailability,
+        option
+      );
       res.send(result);
-    })
+    });
 
     // app.get("/availability/:id", async (req, res) => {
     //   const id = req.params.id;
@@ -515,4 +519,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-io.listen(portIo, () => { })
+io.listen(portIo, () => {});
