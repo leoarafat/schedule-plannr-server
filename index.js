@@ -88,11 +88,21 @@ async function run() {
     // Team
     const teamCollection = client.db("ScheduPlannr").collection("team");
 
+    const availability = client.db("ScheduPlannr").collection("availability");
+
+    // const checkBox = client.db("ScheduPlannr").collection("checkBox");
+
     // Users
     app.post("/users", async (req, res) => {
-      const query = req.body;
-      const result = await userCollection.insertOne(query);
-      res.send(result);
+      const user = req.body;
+      const email = user.email;
+      const query = { email: email };
+      const isExist = await userCollection.findOne(query);
+      if (!isExist) {
+        const result = await userCollection.insertOne(user);
+        res.send(result);
+      }
+      res.send({ message: "This user already exist!" });
     });
 
     // JWT Token
@@ -100,6 +110,7 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
+      console.log(user);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
           expiresIn: "1d",
@@ -131,9 +142,9 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     });
-    app.put("/user/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: ObjectID(id) };
+    app.patch("/user/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
       const user = req.body;
       const option = { upsert: true };
       const updateDoc = {
@@ -152,7 +163,6 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
-      console.log(result);
       res.send(result);
     });
     app.put("/user/admin/:id", verifyJWT, async (req, res) => {
@@ -179,15 +189,22 @@ async function run() {
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
+    // Delete users
+    app.delete("/user/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Membership
-    app.get("/membership", verifyJWT, async (req, res) => {
+    app.get("/membership", async (req, res) => {
       const query = {};
       const result = await membershipCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.get("/membership/:id", verifyJWT, async (req, res) => {
+    app.get("/membership/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const query = { _id: ObjectId(id) };
@@ -198,14 +215,14 @@ async function run() {
     });
 
     // Add notes
-    app.post("/notes", verifyJWT, async (req, res) => {
+    app.post("/notes", async (req, res) => {
       const query = req.body;
       const result = await notesCollection.insertOne(query);
       res.send(result);
     });
 
     // get notes
-    app.get("/notes", verifyJWT, async (req, res) => {
+    app.get("/notes", async (req, res) => {
       const query = {};
       const cursor = await notesCollection
         .find(query)
@@ -214,7 +231,7 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/notes/:id", verifyJWT, async (req, res) => {
+    app.get("/notes/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const cursor = await notesCollection.findOne(query);
@@ -222,7 +239,7 @@ async function run() {
     });
 
     // delete note
-    app.delete("/notes/:id", async (req, res) => {
+    app.delete("/notes/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await notesCollection.deleteOne(query);
@@ -230,49 +247,49 @@ async function run() {
     });
 
     // get 15mins time slots AM
-    app.get("/fifteenMinsAM", verifyJWT, async (req, res) => {
+    app.get("/fifteenMinsAM", async (req, res) => {
       const query = {};
       const cursor = await fifteenMinsAmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 15mins time slots PM
-    app.get("/fifteenMinsPM", verifyJWT, async (req, res) => {
+    app.get("/fifteenMinsPM", async (req, res) => {
       const query = {};
       const cursor = await fifteenMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 30mins time slots AM
-    app.get("/thirtyMinsAM", verifyJWT, async (req, res) => {
+    app.get("/thirtyMinsAM", async (req, res) => {
       const query = {};
       const cursor = await thirtyMinsAmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 30mins time slots PM
-    app.get("/thirtyMinsPM", verifyJWT, async (req, res) => {
+    app.get("/thirtyMinsPM", async (req, res) => {
       const query = {};
       const cursor = await thirtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 60mins time slots AM
-    app.get("/sixtyMinsAM", verifyJWT, async (req, res) => {
+    app.get("/sixtyMinsAM", async (req, res) => {
       const query = {};
       const cursor = await sixtyMinsAMCollection.find(query).toArray();
       res.send(cursor);
     });
 
     // get 60mins time slots PM
-    app.get("/sixtyMinsPM", verifyJWT, async (req, res) => {
+    app.get("/sixtyMinsPM", async (req, res) => {
       const query = {};
       const cursor = await sixtyMinsPmCollection.find(query).toArray();
       res.send(cursor);
     });
 
     //create schedule
-    app.post("/createSchedule", verifyJWT, async (req, res) => {
+    app.post("/createSchedule", async (req, res) => {
       const schedule = req.body;
       const query = {
         email: schedule.email,
@@ -291,7 +308,7 @@ async function run() {
     });
 
     // update schedule
-    app.put("/createSchedule/:id", verifyJWT, async (req, res) => {
+    app.put("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
       const filter = {
         _id: ObjectId(id),
@@ -319,35 +336,15 @@ async function run() {
     });
 
     // delete schedule
-    app.delete("/createSchedule/:id", verifyJWT, async (req, res) => {
+    app.delete("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await createSchedule.deleteOne(query);
       res.send(result);
     });
 
-    // yeasin arafat
-    app.post("/team", verifyJWT, async (req, res) => {
-      const user = req.body;
-      const result = await teamCollection.insertOne(user);
-      res.send(result);
-    });
-
-    app.get("/team", verifyJWT, async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const result = await teamCollection.find(query).toArray();
-      res.send(result);
-    });
-    app.delete("/team/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await teamCollection.deleteOne(query);
-      res.send(result);
-    });
-
     //my Schedule
-    app.get("/mySchedule", verifyJWT, async (req, res) => {
+    app.get("/mySchedule", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const mySchedule = await createSchedule.find(query).toArray();
@@ -355,7 +352,7 @@ async function run() {
     });
 
     // get Schedule
-    app.get("/createSchedule/:id", verifyJWT, async (req, res) => {
+    app.get("/createSchedule/:id", async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: ObjectId(id),
@@ -364,8 +361,54 @@ async function run() {
       res.send(mySchedule);
     });
 
+    // team
+    app.post("/team", async (req, res) => {
+      const user = req.body;
+      const result = await teamCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get("/team", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await teamCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/team/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await teamCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.put("/team/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = {
+        _id: ObjectId(id),
+      };
+      const team = req.body;
+      const option = { upsert: true };
+      const updateTeam = {
+        $set: {
+          name: team.name,
+          email: team.email,
+          name1: team.name1,
+          email1: team.email1,
+          name2: team.name2,
+          email2: team.email,
+          name3: team.name,
+          email3: team.email,
+          name4: team.name,
+          email4: team.email,
+        },
+      };
+      const result = await teamCollection.updateOne(filter, updateTeam, option);
+      res.send(result);
+    });
+
     // payment
-    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const price = req.body?.cost;
       const amount = Number(price * 100);
       if (amount) {
@@ -380,7 +423,7 @@ async function run() {
       }
     });
     // add blog
-    app.post("/blogs", async (req, res) => {
+    app.post("/blogs", verifyJWT, async (req, res) => {
       const query = req.body;
       const result = await blogsCollection.insertOne(query);
       res.send(result);
@@ -395,41 +438,21 @@ async function run() {
     app.delete("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const result = await userCollection.deleteOne(query);
+      const result = await blogsCollection.deleteOne(query);
       res.send(result);
     });
+
     app.get("/blogPost/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const cursor = await blogsCollection.findOne(query);
       res.send(cursor);
     });
-    //socket
-    const emailToSocketMapping = new Map();
-    const socketToEmailMapping = new Map();
 
-    io.on("connection", (socket) => {
-      // console.log('new connection')
-      socket.on("join-room", (data) => {
-        const { roomId, emailId } = data;
-        console.log("user", emailId, "Joined room with", roomId);
-        emailToSocketMapping.set(emailId, socket.id);
-        socketToEmailMapping.set(socket.id, emailId);
-        socket.join(roomId);
-        socket.emit("joined-room", { roomId });
-        socket.broadcast.to(roomId).emit("user-joined", { emailId });
-      });
-      socket.on("call-user", (data) => {
-        const { emailId, offer } = data;
-        const fromEmail = socketToEmailMapping.get(socket.id);
-        const socketId = emailToSocketMapping.get(emailId);
-        socket.to(socketId)?.emit("incoming-call", { from: fromEmail, offer });
-      });
-      socket.on("call-accepted", (data) => {
-        const { emailId, ans } = data;
-        const socketId = emailToSocketMapping.get(emailId);
-        socket.to(socketId).emit("call-accepted", { ans });
-      });
+    app.get("/availability", async (req, res) => {
+      const query = {};
+      const result = await availability.find(query).toArray();
+      res.send(result);
     });
   } finally {
   }
