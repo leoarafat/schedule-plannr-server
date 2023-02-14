@@ -138,9 +138,7 @@ async function run() {
       const option = { upsert: true };
       const updateDoc = {
         $set: {
-          name: user.displayName,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          name: user.name,
           email: user.email,
           image: user.image,
           birthDate: user.birthDate,
@@ -172,13 +170,6 @@ async function run() {
         options
       );
       res.send(result);
-    });
-    
-    app.get("/user/admin/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const user = await userCollection.findOne(query);
-      res.send({ isAdmin: user?.role === "admin" });
     });
 
     // admin
@@ -400,8 +391,8 @@ async function run() {
       res.send(result);
     });
 
-    // Delete users
-    app.delete("/user/:id", verifyJWT, async (req, res) => {
+    //user delete
+    app.delete("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await userCollection.deleteOne(query);
@@ -440,7 +431,6 @@ async function run() {
         socket.to(socketId).emit("call-accepted", { ans });
       });
     });
-    
   } finally {
   }
 }
@@ -453,4 +443,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-io.listen(portIo, ()=> {})
+io.listen(portIo, () => {});
