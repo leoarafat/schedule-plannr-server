@@ -1,22 +1,18 @@
 const express = require("express");
 const app = express();
+require("dotenv").config();
+const nodemailer = require("nodemailer");
 const bodyParser = require("body-parser");
-const { Server } = require("socket.io");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const io = new Server({
-  cors: true,
-});
 
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-require("dotenv").config();
-
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const port = process.env.PORT || 5000;
-const portIo = process.env.PORT || 5001;
 const {
   MongoClient,
   ServerApiVersion,
@@ -454,6 +450,65 @@ async function run() {
       const result = await availability.find(query).toArray();
       res.send(result);
     });
+
+    //Yeasin Arafat
+    // Nodemailer setup
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "syntaxterminators7@gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+    // Endpoint for processing orders
+    app.post("/scheduleCreate", (req, res) => {
+      console.log(req.body);
+      const { name, email, organization, link, slot, value } = req.body;
+
+      // Send email notification
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Schedule Confirmation",
+        text: `Hi ${name}, Your organization name is${organization} it's will be start on ${value
+          ?.toString()
+          .slice(0, 15)} at${slot} and  Your Meeting Link is ${link}`,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+          res.status(500).send("Error sending email");
+        } else {
+          console.log("Email sent: " + info.response);
+          res.send("Order confirmation email sent");
+        }
+      });
+    });
+    //payment
+    app.post("/paymentMessage", (req, res) => {
+      const { paymentIntent, name, email } = req.body;
+      console.log(paymentIntent, email);
+      const { amount } = paymentIntent;
+      // Send email notification
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Payment Confirmation",
+        text: `Hi ${name} your payment of Tk ${amount} has been successful, `,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+          res.status(500).send("Error sending email");
+        } else {
+          console.log("Email sent: " + info.response);
+          res.send("Payment confirmation email sent");
+        }
+      });
+    });
   } finally {
   }
 }
@@ -466,4 +521,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-io.listen(portIo, () => {});
