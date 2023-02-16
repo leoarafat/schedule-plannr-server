@@ -89,6 +89,8 @@ async function run() {
     const teamCollection = client.db("ScheduPlannr").collection("team");
 
     const availability = client.db("ScheduPlannr").collection("availability");
+    const availability2 = client.db("ScheduPlannr").collection("availability2");
+
 
     // const checkBox = client.db("ScheduPlannr").collection("checkBox");
 
@@ -96,8 +98,29 @@ async function run() {
     app.post("/users", async (req, res) => {
       const query = req.body;
       const result = await userCollection.insertOne(query);
+      await availability2.insertOne({
+        email: query.email,
+        slots: [
+          {
+            id: 1,
+            day: 'sun',
+            start_time: '9am',
+            end_time: '10am',
+            status: 'available'
+          },
+          {
+            id: 2,
+            day: 'mon',
+            start_time: '9am',
+            end_time: '10am',
+            status: 'available'
+          }
+        ]
+      })
       res.send(result);
     });
+
+
 
     // JWT Token
     app.get("/jwt", async (req, res) => {
@@ -138,7 +161,7 @@ async function run() {
     });
     app.patch("/user/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const filter = {email: email };
+      const filter = { email: email };
       const user = req.body;
       const option = { upsert: true };
       const updateDoc = {
@@ -292,7 +315,7 @@ async function run() {
     });
 
     //create schedule
-    app.post("/createSchedule", verifyJWT, async (req, res) => {
+    app.post("/createSchedule", async (req, res) => {
       const schedule = req.body;
       const query = {
         email: schedule.email,
@@ -454,9 +477,11 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/availability", async (req, res) => {
-      const query = {};
+    app.get("/availability", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
       const result = await availability.find(query).toArray();
+      console.log(result);
       res.send(result);
     });
 
@@ -468,10 +493,10 @@ async function run() {
       const updateAvailability = {
         $set: {
           start_time: availabilityy.start_time,
-          // end_time: availabilityy.end_time,
-          // role: availabilityy.role
+          end_time: availabilityy.end_time
         }
       };
+      console.log(availabilityy);
       const result = await availability.updateOne(filter, updateAvailability, option);
       res.send(result);
     })
@@ -516,3 +541,62 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
 io.listen(portIo, () => { })
+
+
+// Availablity
+// [
+//   {
+//     email: 'example@gmail.com',
+//     slots: [
+//       {
+//         id: 1,
+//         day: 'sun',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//       {
+//         id: 2,
+//         day: 'mon',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//       {
+//         id: 3,
+//         day: 'tue',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//       {
+//         id: 4,
+//         day: 'wed',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//       {
+//         id: 5,
+//         day: 'thu',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//       {
+//         id: 6,
+//         day: 'fri',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//       {
+//         id: 7,
+//         day: 'sat',
+//         start_time: '9am',
+//         end_time: '10am',
+//         status: 'available'
+//       },
+//     ]
+//   }
+// ]
