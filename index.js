@@ -448,7 +448,7 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/availability", verifyJWT, async (req, res) => {
+    app.get("/availability", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const result = await availability.find(query).toArray();
@@ -484,4 +484,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-io.listen(portIo, () => { })
+// io.listen(portIo, () => { })
