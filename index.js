@@ -85,7 +85,6 @@ async function run() {
     const teamCollection = client.db("ScheduPlannr").collection("team");
 
     const availability = client.db("ScheduPlannr").collection("availability");
-    const availability2 = client.db("ScheduPlannr").collection("availability2");
 
 
     // const checkBox = client.db("ScheduPlannr").collection("checkBox");
@@ -448,29 +447,49 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/availability", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const result = await availability.find(query).toArray();
-      console.log(result);
+    //post schedule from schedule availability
+    app.post("/availability", async (req, res) => {
+      const query = req.body;
+      const result = await availability.insertOne(query);
       res.send(result);
     });
 
-    app.put("/availability/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: ObjectId(id) };
-      const availabilityy = req.body;
-      const option = { upsert: true };
-      const updateAvailability = {
-        $set: {
-          start_time: availabilityy.start_time,
-          end_time: availabilityy.end_time
-        }
-      };
-      console.log(availabilityy);
-      const result = await availability.updateOne(filter, updateAvailability, option);
+    app.get("/weeklySchedule", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await availability.find(query).toArray();
       res.send(result);
     })
+
+    app.get("/weeklySchedule", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await availability.find(query).toArray();
+      res.send(result);
+    })
+
+    app.get("/weeklySchedule/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await availability.findOne(query);
+      res.send(cursor);
+    })
+
+    // app.put("/availability/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: ObjectId(id) };
+    //   const availabilityy = req.body;
+    //   const option = { upsert: true };
+    //   const updateAvailability = {
+    //     $set: {
+    //       start_time: availabilityy.start_time,
+    //       end_time: availabilityy.end_time
+    //     }
+    //   };
+    //   console.log(availabilityy);
+    //   const result = await availability.updateOne(filter, updateAvailability, option);
+    //   res.send(result);
+    // })
 
   } finally {
   }
