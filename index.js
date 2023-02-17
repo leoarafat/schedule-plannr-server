@@ -149,7 +149,7 @@ async function run() {
       const updateDoc = {
         $set: {
           name: user.name,
-          email: user.email,
+          lastName: user.lastName,
           image: user.image,
           birthDate: user.birthDate,
           contactNumber: user.contactNumber,
@@ -158,7 +158,6 @@ async function run() {
           gender: user.gender,
           profession: user.profession,
           about: user.about,
-          role: "",
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
