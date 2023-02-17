@@ -461,13 +461,6 @@ async function run() {
       res.send(result);
     })
 
-    app.get("/weeklySchedule", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const result = await availability.find(query).toArray();
-      res.send(result);
-    })
-
     app.get("/weeklySchedule/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -491,6 +484,75 @@ async function run() {
     //   res.send(result);
     // })
 
+    //Yeasin Arafat
+    // Nodemailer setup
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "syntaxterminators7@gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+    // Endpoint for processing orders
+    app.post("/scheduleCreate", (req, res) => {
+      console.log(req.body);
+      const { name, email, organization, link, slot, value } = req.body;
+
+      // Send email notification
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Schedule Confirmation",
+        text: 
+        `Hi ${name},
+        Your organization name is ${organization}. It will be start on ${value
+          ?.toString()
+          .slice(0, 15)} at ${slot} and 
+          Your Meeting Link is ${link}`,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+          res.status(500).send("Error sending email");
+        } else {
+          console.log("Email sent: " + info.response);
+          res.send("Order confirmation email sent");
+        }
+      });
+    });
+    //payment
+    app.post("/paymentMessage", (req, res) => {
+      const { paymentIntent, name, email } = req.body;
+      console.log(paymentIntent, email);
+      const { amount } = paymentIntent;
+      // Send email notification
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Payment Confirmation",
+        text: 
+        `Hi
+        ${name}, 
+        Your payment of $${amount / 100} has been successful.
+        Visit Our Website : https://schedu-plannr.web.app/
+
+        Thank You for purchasing plan.
+        
+        ScheduPlannr`,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+          res.status(500).send("Error sending email");
+        } else {
+          console.log("Email sent: " + info.response);
+          res.send("Payment confirmation email sent");
+        }
+      });
+    });
   } finally {
   }
 }
