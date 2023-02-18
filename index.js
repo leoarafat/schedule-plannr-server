@@ -87,6 +87,7 @@ async function run() {
 
     const availability = client.db("ScheduPlannr").collection("availability");
 
+
     // const checkBox = client.db("ScheduPlannr").collection("checkBox");
 
     // Users
@@ -101,6 +102,8 @@ async function run() {
       }
       res.send({ message: "This user already exist!" });
     });
+
+
 
     // JWT Token
     app.get("/jwt", async (req, res) => {
@@ -147,7 +150,7 @@ async function run() {
       const updateDoc = {
         $set: {
           name: user.name,
-          email: user.email,
+          lastName: user.lastName,
           image: user.image,
           birthDate: user.birthDate,
           contactNumber: user.contactNumber,
@@ -156,7 +159,6 @@ async function run() {
           gender: user.gender,
           profession: user.profession,
           about: user.about,
-          role: "",
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
@@ -180,7 +182,7 @@ async function run() {
     });
 
     // admin
-    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
+    app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
@@ -295,9 +297,8 @@ async function run() {
       };
       const alreadyBooked = await createSchedule.find(query).toArray();
       if (alreadyBooked.length) {
-        const message = `You have already booked on ${
-          schedule.slot || schedule.slotPm
-        }`;
+        const message = `You have already booked on ${schedule.slot || schedule.slotPm
+          }`;
         return res.send({ acknowledged: false, message });
       }
       const result = await createSchedule.insertOne(schedule);
@@ -446,11 +447,42 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/availability", async (req, res) => {
-      const query = {};
-      const result = await availability.find(query).toArray();
+    //post schedule from schedule availability
+    app.post("/availability", async (req, res) => {
+      const query = req.body;
+      const result = await availability.insertOne(query);
       res.send(result);
     });
+
+    app.get("/weeklySchedule", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await availability.find(query).toArray();
+      res.send(result);
+    })
+
+    app.get("/weeklySchedule/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await availability.findOne(query);
+      res.send(cursor);
+    })
+
+    // app.put("/availability/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: ObjectId(id) };
+    //   const availabilityy = req.body;
+    //   const option = { upsert: true };
+    //   const updateAvailability = {
+    //     $set: {
+    //       start_time: availabilityy.start_time,
+    //       end_time: availabilityy.end_time
+    //     }
+    //   };
+    //   console.log(availabilityy);
+    //   const result = await availability.updateOne(filter, updateAvailability, option);
+    //   res.send(result);
+    // })
 
     //Yeasin Arafat
     // Nodemailer setup
@@ -474,9 +506,12 @@ async function run() {
         from: process.env.EMAIL,
         to: email,
         subject: "Schedule Confirmation",
-        text: `Hi ${name}, Your organization name is${organization} it's will be start on ${value
+        text: 
+        `Hi ${name},
+        Your organization name is ${organization}. It will be start on ${value
           ?.toString()
-          .slice(0, 15)} at${slot} and  Your Meeting Link is ${link}`,
+          .slice(0, 15)} at ${slot} and 
+          Your Meeting Link is ${link}`,
       };
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
@@ -501,7 +536,15 @@ async function run() {
         from: process.env.EMAIL,
         to: email,
         subject: "Payment Confirmation",
-        text: `Hi ${name} your payment of Tk ${amount} has been successful, `,
+        text: 
+        `Hi
+        ${name}, 
+        Your payment of $${amount / 100} has been successful.
+        Visit Our Website : https://schedu-plannr.web.app/
+
+        Thank You for purchasing plan.
+        
+        ScheduPlannr`,
       };
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
@@ -525,3 +568,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+// io.listen(portIo, () => { })
