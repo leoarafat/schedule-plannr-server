@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
+
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -487,6 +488,9 @@ async function run() {
         }
       });
     });
+    //before 15mnt
+
+
     //payment
     app.post("/paymentMessage", (req, res) => {
       const { paymentIntent, name, email } = req.body;
